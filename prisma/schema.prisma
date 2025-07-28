@@ -1,0 +1,93 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Generator
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+// Data Source
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Models
+model User {
+  id       String  @id @default(uuid())
+  name     String
+  email    String  @unique
+  password String
+  role     Role
+  Seller   Seller?
+  Buyer    Buyer?
+  Admin    Admin?
+}
+
+model Seller {
+  id     String @id
+  rating Float
+  User   User   @relation(fields: [id], references: [id])
+  Item   Item[]
+}
+
+model Buyer {
+  id    String @id
+  phone String
+  User  User   @relation(fields: [id], references: [id])
+  Bid   Bid[]
+}
+
+model Admin {
+  id       String    @id
+  username String
+  User     User      @relation(fields: [id], references: [id])
+  Auction  Auction[]
+  Item     Item[]
+}
+
+model Auction {
+  id           Int      @id @default(autoincrement())
+  description  String
+  startingTime DateTime
+  endTime      DateTime
+  reservePrice Float
+  adminId      String
+  Admin        Admin    @relation(fields: [adminId], references: [id])
+  Item         Item[]
+  Bid          Bid[]
+}
+
+model Item {
+  id          Int     @id @default(autoincrement())
+  name        String
+  description String
+  status      String
+  sellerId    String
+  adminId     String
+  auctionId   Int
+  Seller      Seller  @relation(fields: [sellerId], references: [id])
+  Admin       Admin   @relation(fields: [adminId], references: [id])
+  Auction     Auction @relation(fields: [auctionId], references: [id])
+  Bid         Bid[]
+}
+
+model Bid {
+  id        Int      @id @default(autoincrement())
+  amount    Float
+  bidTime   DateTime @default(now())
+  itemId    Int
+  buyerId   String
+  auctionId Int
+  Item      Item     @relation(fields: [itemId], references: [id])
+  Buyer     Buyer    @relation(fields: [buyerId], references: [id])
+  Auction   Auction  @relation(fields: [auctionId], references: [id])
+}
+
+// Enum
+enum Role {
+  buyer
+  seller
+  admin
+}
